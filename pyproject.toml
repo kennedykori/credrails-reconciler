@@ -22,7 +22,9 @@ classifiers = [
     "Typing :: Typed"
 ]
 dependencies = [
+    "attrs~=23.2.0",
     "click~=8.1.7",
+    "importlib_metadata~=7.0.1",
     "typing-extensions>=4.9",
 ]
 description = "A tool that reads in two datasets, reconciles their records, and produce a report detailing the differences between the two."
@@ -35,6 +37,14 @@ maintainers = [
 name = "credrails-reconciler"
 readme = "README.md"
 requires-python = ">=3.12" # Support Python 3.12+.
+
+[project.entry-points."credrails.reconciler.cli.reconciler"]
+csv-reconciler = "credrails.reconciler.lib.csv_reconciler:CSVReconciler"
+
+[project.entry-points."credrails.reconciler.cli.diff_writer"]
+pretty-writer = "credrails.reconciler.lib.common:PrettyDiffWriter.of"
+csv-writer = "credrails.reconciler.lib.csv_reconciler:CSVDiffWriter"
+failing-writer = "credrails.reconciler.lib.common:FailingDiffWriter.of"
 
 [project.optional-dependencies]
 dev = [
@@ -69,7 +79,7 @@ test = [
 ]
 
 [project.scripts]
-credrails-reconciler = "credrails.reconciler.__main__:main"
+credrails-reconciler = "credrails.reconciler.cli.__main__:main"
 
 [project.urls]
 documentation = "https://github.com/kennedykori/credrails-reconciler/blob/develop/README.md"
@@ -272,7 +282,7 @@ legacy_tox_ini = """
         ruff .
         pyright .
         coverage erase
-        pytest {posargs:.}
+        -pytest {posargs:.}
         coverage html
     deps =
         .
@@ -301,7 +311,7 @@ legacy_tox_ini = """
     [testenv:docs]
     changedir = docs
     commands =
-        sphinx-build -EW --keep-going -b html . {toxinidir}/docs/build/html
+        -sphinx-build -EW --keep-going -b html . {toxinidir}/docs/build/html
         sphinx-lint -i api
     description = build sphinx documentation
     extras =
