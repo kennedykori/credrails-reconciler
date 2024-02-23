@@ -54,7 +54,24 @@ exclude_patterns = []
 # Be strict about any broken references
 nitpicky = True
 
-nitpick_ignore = []
+nitpick_ignore = [
+    ("py:attr", "credrails.reconciler.app._config.Config.diff_writer_factory"),  # private attr
+    ("py:attr", "credrails.reconciler.app._config.Config.reconciler_factory"),  # private attr
+    ("py:class", "CSVRecord"),  # type annotation only available when type checking
+    ("py:class", "CSVRecordDifferFactory"),  # type annotation only available when type checking
+    ("py:class", "DT"),  # type annotation only available when type checking
+    ("py:class", "ST"),  # type annotation only available when type checking
+    ("py:class", "T"),  # type annotation only available when type checking
+    ("py:class", "TT"),  # type annotation only available when type checking
+    ("py:class", "Diff"),  # Used as type annotation. Only available when type checking
+    ("py:class", "Differ"),  # Used as type annotation. Only available when type checking
+    ("py:class", "DiffWriter"),  # Used as type annotation. Only available when type checking
+    ("py:class", "Reconciler"),  # Used as type annotation. Only available when type checking
+    ("py:class", "SupportsWrite"),  # Used as type annotation. Only available when type checking
+    ("py:class", "Writer"),  # Used as type annotation. Only available when type checking
+    ("py:class", "credrails.reconciler.app._config.Config"),  # private type
+    ("py:obj", "credrails.reconciler.lib.csv_reconciler.CSVRecord"),  # type annotation only available when type checking
+]
 
 templates_path = ["_templates"]
 

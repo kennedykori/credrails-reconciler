@@ -311,7 +311,7 @@ legacy_tox_ini = """
     [testenv:docs]
     changedir = docs
     commands =
-        -sphinx-build -EW --keep-going -b html . {toxinidir}/docs/build/html
+        sphinx-build -EW --keep-going -b html . {toxinidir}/docs/build/html
         sphinx-lint -i api
     description = build sphinx documentation
     extras =
