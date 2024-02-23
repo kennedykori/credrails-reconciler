@@ -48,7 +48,7 @@ class RecordIDMissingError(ReconcilerError):
 
 
 class UnsupportedDiffTypeError(ReconcilerError):
-    """Indicates that a provided `Diff` instance is not supported.
+    """Indicates that a provided :class:`Diff` instance is not supported.
 
     This is raised by the :class:`CSVDiffWriter` to indicate that the given
     `Diff` instance(s) are not of type :class:`CSVDiff`.
@@ -64,9 +64,27 @@ class CSVDiffKinds(StrEnum):
     """Common CSV Diff types."""
 
     EXTRA_TGT_FIELD = "Extra Target Column"
+    """
+    Used to denote a :class:`Diff` where the target record has an extra column.
+    """
+
     FIELD_MISMATCH = "Field Discrepancy"
+    """
+    Used to denote a :class:`Diff` where there is a discrepancy between the
+    source and target record on one of the available fields.
+    """
+
     NOT_IN_SOURCE = "Missing in Source"
+    """
+    Used to denote a :class:`Diff` where there exists a record that is on the
+    target dataset but missing on the source dataset.
+    """
+
     NOT_IN_TARGET = "Missing in Target"
+    """
+    Used to denote a :class:`Diff` where there exists a record that is on the
+    source dataset but missing on the target dataset.
+    """
 
 
 # =============================================================================
@@ -76,20 +94,25 @@ class CSVDiffKinds(StrEnum):
 
 @frozen
 class CSVDiff(Diff[str]):
-    """:class:`Diff` produced when reconciling CSV records."""
+    """:class:`Diff` produced when reconciling CSV datasets/records."""
 
     _kind: CSVDiffKinds = field(alias="kind")
-    record_id: str = field(validator=validators.instance_of(str))
+    _record_id: str = field(
+        alias="record_id",
+        validator=validators.instance_of(str),
+    )
     _field: str | None = field(
         alias="field",
         default=None,
         validator=validators.optional(validators.instance_of(str)),
     )
-    source_value: str | None = field(
+    _source_value: str | None = field(
+        alias="source_value",
         default=None,
         validator=validators.optional(validators.instance_of(str)),
     )
-    target_value: str | None = field(
+    _target_value: str | None = field(
+        alias="target_value",
         default=None,
         validator=validators.optional(validators.instance_of(str)),
     )
@@ -100,9 +123,9 @@ class CSVDiff(Diff[str]):
         """A summary of the expected value."""
         match self._kind:
             case CSVDiffKinds.NOT_IN_TARGET:
-                return f"Record: {self.record_id}"
+                return f"Record: {self._record_id}"
             case CSVDiffKinds.FIELD_MISMATCH:
-                return f"Value: {self.source_value}"
+                return f"Value: {self._source_value}"
             case _:
                 return ""
 
@@ -119,9 +142,9 @@ class CSVDiff(Diff[str]):
             case CSVDiffKinds.EXTRA_TGT_FIELD:
                 return f"Column: {self.field}"
             case CSVDiffKinds.FIELD_MISMATCH:
-                return f"Value: {self.target_value}"
+                return f"Value: {self._target_value}"
             case CSVDiffKinds.NOT_IN_SOURCE:
-                return f"Record: {self.record_id}"
+                return f"Record: {self._record_id}"
             case _:
                 return ""
 
@@ -131,12 +154,40 @@ class CSVDiff(Diff[str]):
         """The type of this diff."""
         return self._kind
 
+    @property
+    def record_id(self) -> str:
+        """The identifier of the record in focus."""
+        return self._record_id
+
+    @property
+    def source_value(self) -> str | None:
+        """The value on the source record when available."""
+        return self._source_value
+
+    @property
+    def target_value(self) -> str | None:
+        """The value on the target record when available."""
+        return self._target_value
+
     @classmethod
     def of_extra_target_field(
         cls,
         record_id: str,
         field: str,
     ) -> Self:
+        """Create a ``CSVDiff`` of kind :attr:`~CSVDiffKinds.EXTRA_TGT_FIELD`.
+
+        Create and return a ``CSVDiff`` of kind
+        :attr:`~CSVDiffKinds.EXTRA_TGT_FIELD` for the given field and the
+        record with the given identifier.
+
+        :param record_id: The identifier of the target record with an extra
+            field.
+        :param field: The name of the extra field on the target record that is
+            missing on the source record.
+
+        :return: An instance of ``CSVDiff`` with the given properties.
+        """
         return cls(
             kind=CSVDiffKinds.EXTRA_TGT_FIELD,
             record_id=record_id,
@@ -151,6 +202,20 @@ class CSVDiff(Diff[str]):
         source_value: str,
         target_value: str,
     ) -> Self:
+        """Create a ``CSVDiff`` of kind :attr:`~CSVDiffKinds.FIELD_MISMATCH`.
+
+        Create and return a ``CSVDiff`` of kind
+        :attr:`~CSVDiffKinds.FIELD_MISMATCH` for the given field, record with
+        the specified identifier and source and target values.
+
+        :param record_id: The shared identifier of the records (both source and
+            target) where there is a field discrepancy.
+        :param field: The name of the field with the discrepancy.
+        :param source_value: The value on the source record.
+        :param target_value: The value on the target record.
+
+        :return: An instance of ``CSVDiff`` with the given properties.
+        """
         return cls(
             kind=CSVDiffKinds.FIELD_MISMATCH,
             record_id=record_id,
@@ -161,10 +226,32 @@ class CSVDiff(Diff[str]):
 
     @classmethod
     def of_not_in_source(cls, record_id: str) -> Self:
+        """Create a ``CSVDiff`` of kind :attr:`~CSVDiffKinds.NOT_IN_SOURCE`.
+
+        Create and return a ``CSVDiff`` of kind
+        :attr:`~CSVDiffKinds.NOT_IN_SOURCE` for the target record with the
+        given identifier.
+
+        :param record_id: The identifier of the record on the target dataset
+            that is missing on the source record.
+
+        :return: An instance of ``CSVDiff`` with the given properties.
+        """
         return cls(kind=CSVDiffKinds.NOT_IN_SOURCE, record_id=record_id)
 
     @classmethod
     def of_not_in_target(cls, record_id: str) -> Self:
+        """Create a ``CSVDiff`` of kind :attr:`~CSVDiffKinds.NOT_IN_TARGET`.
+
+        Create and return a ``CSVDiff`` of kind
+        :attr:`~CSVDiffKinds.NOT_IN_TARGET` for the source record with the
+        given identifier.
+
+        :param record_id: The identifier of the record on the source dataset
+            that is missing on the target record.
+
+        :return: An instance of ``CSVDiff`` with the given properties.
+        """
         return cls(kind=CSVDiffKinds.NOT_IN_TARGET, record_id=record_id)
 
 
@@ -202,6 +289,12 @@ class CSVDiffWriter(DiffWriter[str]):
 
 
 class CSVRecordDiffer(Differ[CSVRecord, CSVRecord, str], metaclass=ABCMeta):
+    """Base :class:`Differ` for all differs operating on CSV records.
+
+    All ``Differ`` implementations for comparing CSV records are derived from
+    this one.
+    """
+
     @abstractmethod
     def compare(
         self,
@@ -216,6 +309,20 @@ class CSVRecordDiffer(Differ[CSVRecord, CSVRecord, str], metaclass=ABCMeta):
 
 @frozen
 class SimpleCSVRecordDiffer(CSVRecordDiffer):
+    """Basic :class:`Differ` for comparing CSV records.
+
+    This compares two CSV records for field discrepancies using the equals
+    operator. It does not support complex field value sanitizations and only
+    performs the following:
+
+    - Extra leading and trailing space removal on strings.
+    - Checking for case sensitivity issues on strings. All string values are
+      converted to lower case before being checked for any differences.
+
+    This ``Differ`` does also support checking for extra columns on the target
+    record.
+    """
+
     @override
     def compare(
         self,
@@ -276,6 +383,13 @@ class SimpleCSVRecordDiffer(CSVRecordDiffer):
 
 @frozen
 class CSVReconciler(Reconciler):
+    """A :class:`Reconciler` that operates on CSV datasets.
+
+    This ``Reconciler`` outsources CSV records comparisons to an instance of
+    :class:`CSVRecordDiffer`. It does, however, identify records missing on
+    both the source and target datasets natively.
+    """
+
     _source: Iterable[str] = field(
         alias="source",
         repr=False,

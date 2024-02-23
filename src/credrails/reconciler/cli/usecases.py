@@ -15,12 +15,22 @@ def run(
     target: Iterable[Any],
     writable: IO[Any],
 ) -> None:
-    """Run a :class:`Reconciler` and consume its output.
+    """Run a ``Reconciler`` and write it's output to the given ``writable``.
+
+    Uses the
+    :attr:`~credrails.reconciler.app._config.Config.reconciler_factory` and
+    :attr:`~credrails.reconciler.app._config.Config.diff_writer_factory`
+    properties of the active :attr:`config<credrails.reconciler.app.conf>` to
+    create a :class:`~credrails.reconciler.core.domain.Reconciler` and
+    :class:`~credrails.reconciler.core.domain.DiffWriter` respectively. The
+    created `Reconciler` is then used t
 
     :param source:
     :param target:
     :param writable:
     :return:
+
+    .. _reconciler: credrails.reconciler.core.Reconciler
     """
     from credrails.reconciler import app
 

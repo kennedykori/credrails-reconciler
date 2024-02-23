@@ -38,7 +38,10 @@ API Reference
    :caption: API
    :recursive:
 
-     credrails.reconciler
+     credrails.reconciler.app
+     credrails.reconciler.cli
+     credrails.reconciler.core
+     credrails.reconciler.lib
 
 
 .. _virtual environment: https://packaging.python.org/tutorials/installing-packages/#creating-virtual-environments
